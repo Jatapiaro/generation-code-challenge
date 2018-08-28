@@ -2,6 +2,10 @@
   overflow-y: scroll;
 }
 
+.ActionButton {
+  margin-bottom: 10px;
+}
+
 .card {
   margin-top: 15px;
 }
@@ -19,6 +23,6 @@
 }
 
 html {
-    overflow: -moz-scrollbars-vertical; 
-    overflow-y: scroll;
+  overflow: -moz-scrollbars-vertical; 
+  overflow-y: scroll;
 }

@@ -14,16 +14,43 @@ class YourComponent extends Component {
     super(props);
     this.state = {
       center: { lat: 19.432608, lng: -99.133290 },
-      counter: 0,
       stores: [],
+      showFavourites: false,
+      showingInfoWindow: false,
+      activeMarker: {},
+      selectedPlace: {},
+      defaultIcon: {
+        url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|0091ff|40|_|%E2%80%A2', // url
+        scaledSize: new this.props.google.maps.Size(20, 30), // scaled size
+      },
+      highlightedIcon: {
+        url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|FFFF24|40|_|%E2%80%A2', // url
+        scaledSize: new this.props.google.maps.Size(20, 30), // scaled size
+      }
     }
+    this.onMarkerClick = this.onMarkerClick.bind(this);
+    this.toggleShowFavourites = this.toggleShowFavourites.bind(this);
   }
 
   componentWillMount() {
   
     if ( localStorage.getItem('stores') ) {
 
+      let stores = JSON.parse(localStorage.getItem('stores'));
 
+      this.setState(() => {
+        return {
+          stores: stores
+        }
+      });
+
+      for( let i = 0; i < stores.length; i++ ) {
+        let store = stores[i];
+        if ( !store.Position ) {
+          this.fillMissingPositions();
+          break;
+        } 
+      }
 
     } else {
       this.fetchStoresData();
@@ -38,46 +65,116 @@ class YourComponent extends Component {
       .then(response => {
 
         let stores = response.data;
-        this.setState(() => {
+        for( let i = 0; i < stores.length; i++ ) {
+          let store = stores[i];
+          store['Position'] = undefined;
+          store['Favourite'] = false;
+        }
+        this.setState((prevState) => {
           return {
             stores: stores
           }
         });
-        let index = 0;
-        this.fetchingFunction = setInterval(() => {
-
-          if (index <= stores.length) {
-            Geocode.fromAddress(stores[index].Address).then(
-              response => {
-                const { lat, lng } = response.results[0].geometry.location;
-                this.setState((prevState) => {
-
-                  let arr = (prevState.stores.length === 0)? stores : prevState.stores;
-                  arr = stores;
-                  let store = arr[index];
-                  store['Position'] = { lat: lat, lng: lng };
-
-                  return {
-                    stores: arr
-                  }
-
-                })
-                index++;
-              },
-              error => {
-                console.error(error);
-              }
-            );
-          }
-
-          console.log(index);
-
-        }, 10000);
+        localStorage.setItem('stores', JSON.stringify(stores));
+        this.fillMissingPositions();
 
       })
       .catch(function (error) {
         console.log(error);
       });    
+  }
+
+  fillMissingPositions() {
+
+    if ( this.state.stores.length > 0 ) {
+
+      for ( let i = 0; i < this.state.stores.length; i++ ) {
+        let store = this.state.stores[i];
+        if ( !store.Position ) {
+          Geocode.fromAddress(store.Address).then(
+            response => {
+              const { lat, lng } = response.results[0].geometry.location;
+
+              this.setState((prevState) => {
+
+                let arr = prevState.stores;
+                let store = arr[i];
+                store.Position = { lat: lat, lng: lng };
+                localStorage.setItem('stores', JSON.stringify(arr));
+                return {
+                  stores: arr
+                }
+
+              })
+            },
+            error => {
+              console.error(error);
+            }
+          );
+          break;
+
+        }
+      }
+
+    }
+    setTimeout(this.fillMissingPositions.bind(this), 10000);
+  }
+
+
+  centerOnMap(index) {
+    this.setState((prevState) => {
+
+      let arr = prevState.stores;
+      let store = arr[index];
+
+      return {
+        center: store.Position,
+      }
+
+    });
+  }
+
+  showInfoWindow(index) {
+    this.setState((prevState) => {
+      let arr = prevState.stores;
+      let store = arr[index];
+      return {
+        infowWindowVisible: true,
+        infoStore: store
+      }
+    })
+  }
+
+  onMarkerClick(props, marker, e) {
+    this.setState({
+      selectedPlace: props,
+      activeMarker: marker,
+      showingInfoWindow: true
+    });
+  };
+
+  toggleShowFavourites() {
+    this.setState((prevState) => {
+      return {
+        showFavourites: !prevState.showFavourites,
+        showingInfoWindow: false
+      }
+    })
+  }
+
+  toggleFavouriteElement(index) {
+    this.setState((prevState) => {
+      
+      let arr = prevState.stores;
+      let store = arr[index];
+      store.Favourite = !store.Favourite;
+      localStorage.setItem('stores', JSON.stringify(arr));
+
+      return {
+        stores: arr,
+      }
+
+    });
   }
   
   render() {
@@ -90,18 +187,62 @@ class YourComponent extends Component {
 
           <div className="col-sm-12 col-md-12 col-lg-3 col-xl-3">
 
-            <div className="ButtonHeader">
-              <Button className="FullButton" color="primary">Tiendas</Button>
-              <Button className="FullButton" outline color="primary">Mis Favoritos</Button>
-            </div>
-
-            <div className="container" style={{overflow: "scroll", height: "650px"}}>
               {
+                this.state.showFavourites &&
+                <div className="ButtonHeader">
+                  <Button onClick={this.toggleShowFavourites} className="FullButton" outline color="info">Tiendas</Button>
+                  <Button className="FullButton" color="success">Mis Favoritos</Button>
+                </div>
+              }
+              {
+                !this.state.showFavourites &&
+                <div className="ButtonHeader">
+                  <Button className="FullButton" color="info">Tiendas</Button>
+                  <Button onClick={this.toggleShowFavourites} className="FullButton" outline color="success">Mis Favoritos</Button>
+                </div>
+              }
+            
+
+            <div className="container" style={{overflow: "scroll", height: "870px", marginBottom: "10px" }}>
+              {
+                this.state.showFavourites &&
                 this.state.stores.map((store, index) => 
-                  <Card key={index} body inverse color="info">
+                  {
+                    if ( store.Favourite ) {
+                      return (
+                        <Card key={index} body inverse color="success">
+                          <CardTitle>{store.Name}</CardTitle>
+                          <CardText>{store.Address}</CardText>
+                          <Button onClick={() => { this.toggleFavouriteElement(index) }} className="ActionButton" size="sm" color={(!store.Favourite) ? 'warning' : 'secondary'}>
+                            {
+                              (!store.Favourite) ? `Agregar a Favoritos` : `Quitar de Favoritos`
+                            }
+                          </Button>
+                          {
+                            store.Position &&
+                            <Button onClick={() => { this.centerOnMap(index) }} size="sm" color="danger">Centrar en el Mapa</Button>
+                          }
+                        </Card>
+                      );
+                    }
+                  }
+                )
+              }
+              {
+                !this.state.showFavourites && 
+                this.state.stores.map((store, index) => 
+                  <Card key={index} body inverse color={(!store.Favourite) ? 'info' : 'success'}>
                     <CardTitle>{store.Name}</CardTitle>
                     <CardText>{store.Address}</CardText>
-                    <Button color="secondary">Agregar a Favoritos</Button>
+                    <Button onClick={() => { this.toggleFavouriteElement(index) }} className="ActionButton" size="sm" color={(!store.Favourite) ? 'warning' : 'secondary'}>
+                      {
+                        (!store.Favourite) ? `Agregar a Favoritos` : `Quitar de Favoritos`
+                      }
+                    </Button>
+                    {
+                      store.Position &&
+                      <Button onClick={() => { this.centerOnMap(index) }} size="sm" color="danger">Centrar en el Mapa</Button>
+                    }
                   </Card>
                 )
               }
@@ -112,26 +253,53 @@ class YourComponent extends Component {
 
             <Map
               google={this.props.google}
+              map={this.props.map}
               initialCenter={this.state.center}
+              center={this.state.center}
               zoom={12}
-              style={{width: "96%"}}
+              style={{ width: "96%", overflow: "hidden", marginTop: "35px" }}
             >
 
               {
+                !this.state.showFavourites &&
                 this.state.stores.map((store, index) => {
                   return store.Position && (
                     <Marker key={index} onClick={this.onMarkerClick}
-                      name={'Current location'}
+                      name={store.Name}
+                      favourite={store.Favourite}
                       position={store.Position}
+                      address={store.Address}
+                      index={index}
+                      icon={(store.Position.lng == this.state.center.lng && store.Position.lat == this.state.center.lat) ? this.state.defaultIcon : this.state.highlightedIcon}
                     />
-                  )
-                }
-                )
+                  );
+                })
               }
 
-              <InfoWindow onClose={this.onInfoWindowClose}>
+              {
+                this.state.showFavourites &&
+                this.state.stores.map((store, index) => {
+                  if ( store.Favourite ) {
+                    return (
+                      <Marker key={index} onClick={this.onMarkerClick}
+                        name={store.Name}
+                        favourite={store.Favourite}
+                        position={store.Position}
+                        address={store.Address}
+                        index={index}
+                        icon={(store.Position.lng == this.state.center.lng && store.Position.lat == this.state.center.lat) ? this.state.defaultIcon : this.state.highlightedIcon}
+                      />
+                    );
+                  }
+                })
+              }
+
+              <InfoWindow
+                marker={this.state.activeMarker}
+                visible={this.state.showingInfoWindow}>
                 <div>
-                  <h1></h1>
+                  <h4>{this.state.selectedPlace.name}</h4>
+                  <p>{this.state.selectedPlace.address}</p>
                 </div>
               </InfoWindow>
 
