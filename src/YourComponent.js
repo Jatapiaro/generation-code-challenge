@@ -44,15 +44,18 @@ class YourComponent extends Component {
         }
       });
 
+      //If we have some stores withouth a fetched position
       for( let i = 0; i < stores.length; i++ ) {
         let store = stores[i];
         if ( !store.Position ) {
+          //We try to fetch the coordinates from the addres
           this.fillMissingPositions();
           break;
         } 
       }
 
     } else {
+      //Load data from JSON
       this.fetchStoresData();
     }
 
@@ -84,6 +87,11 @@ class YourComponent extends Component {
       });    
   }
 
+  /**
+   * In order to avoid QUERY_LIMITS
+   * we set a timeout to look for coordinates
+   * of a store with an undefined Position
+   */
   fillMissingPositions() {
 
     if ( this.state.stores.length > 0 ) {
@@ -117,10 +125,13 @@ class YourComponent extends Component {
       }
 
     }
-    setTimeout(this.fillMissingPositions.bind(this), 10000);
+    setTimeout(this.fillMissingPositions.bind(this), 500);
   }
 
 
+  /** 
+   * @param index in the array of the store
+  */
   centerOnMap(index) {
     this.setState((prevState) => {
 
@@ -134,17 +145,12 @@ class YourComponent extends Component {
     });
   }
 
-  showInfoWindow(index) {
-    this.setState((prevState) => {
-      let arr = prevState.stores;
-      let store = arr[index];
-      return {
-        infowWindowVisible: true,
-        infoStore: store
-      }
-    })
-  }
-
+  /**
+   * 
+   * @param {*} props The props of the marker 
+   * @param {*} marker The marker that was clicked
+   * @param {*} e 
+   */
   onMarkerClick(props, marker, e) {
     this.setState({
       selectedPlace: props,
@@ -153,6 +159,9 @@ class YourComponent extends Component {
     });
   };
 
+  /**
+   * We toggle if the user want to see their favourites or all the stores
+   */
   toggleShowFavourites() {
     this.setState((prevState) => {
       return {
@@ -162,6 +171,10 @@ class YourComponent extends Component {
     })
   }
 
+  /**
+   * 
+   * @param {*} index of the store to changed his favourite attribute
+   */
   toggleFavouriteElement(index) {
     this.setState((prevState) => {
       
