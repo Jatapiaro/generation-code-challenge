@@ -13,12 +13,8 @@ class YourComponent extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      center: { lat: 19.432608, lng: -99.133290 },
-      stores: [],
-      showFavourites: false,
-      showingInfoWindow: false,
       activeMarker: {},
-      selectedPlace: {},
+      center: { lat: 19.432608, lng: -99.133290 },
       defaultIcon: {
         url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|0091ff|40|_|%E2%80%A2', // url
         scaledSize: new this.props.google.maps.Size(20, 30), // scaled size
@@ -26,7 +22,11 @@ class YourComponent extends Component {
       highlightedIcon: {
         url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|FFFF24|40|_|%E2%80%A2', // url
         scaledSize: new this.props.google.maps.Size(20, 30), // scaled size
-      }
+      },
+      selectedPlace: {},
+      showFavourites: false,
+      showingInfoWindow: false,
+      stores: [],
     }
     this.onMarkerClick = this.onMarkerClick.bind(this);
     this.toggleShowFavourites = this.toggleShowFavourites.bind(this);
@@ -59,6 +59,22 @@ class YourComponent extends Component {
       this.fetchStoresData();
     }
 
+  }
+
+  /** 
+   * @param index in the array of the store
+  */
+  centerOnMap(index) {
+    this.setState((prevState) => {
+
+      let arr = prevState.stores;
+      let store = arr[index];
+
+      return {
+        center: store.Position,
+      }
+
+    });
   }
 
   fetchStoresData() {
@@ -128,23 +144,6 @@ class YourComponent extends Component {
     setTimeout(this.fillMissingPositions.bind(this), 500);
   }
 
-
-  /** 
-   * @param index in the array of the store
-  */
-  centerOnMap(index) {
-    this.setState((prevState) => {
-
-      let arr = prevState.stores;
-      let store = arr[index];
-
-      return {
-        center: store.Position,
-      }
-
-    });
-  }
-
   /**
    * 
    * @param {*} props The props of the marker 
@@ -158,18 +157,6 @@ class YourComponent extends Component {
       showingInfoWindow: true
     });
   };
-
-  /**
-   * We toggle if the user want to see their favourites or all the stores
-   */
-  toggleShowFavourites() {
-    this.setState((prevState) => {
-      return {
-        showFavourites: !prevState.showFavourites,
-        showingInfoWindow: false
-      }
-    })
-  }
 
   /**
    * 
@@ -188,6 +175,18 @@ class YourComponent extends Component {
       }
 
     });
+  }
+
+  /**
+   * We toggle if the user want to see their favourites or all the stores
+   */
+  toggleShowFavourites() {
+    this.setState((prevState) => {
+      return {
+        showFavourites: !prevState.showFavourites,
+        showingInfoWindow: false
+      }
+    })
   }
   
   render() {

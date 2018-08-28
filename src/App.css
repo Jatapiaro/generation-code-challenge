@@ -1,13 +1,9 @@
-.App {
-  overflow-y: scroll;
-}
-
 .ActionButton {
   margin-bottom: 10px;
 }
 
-.card {
-  margin-top: 15px;
+.App {
+  overflow-y: scroll;
 }
 
 .ButtonHeader {
@@ -15,6 +11,10 @@
   justify-content: space-evenly;
   margin-top: 15px;
   padding-left: 1em;
+}
+
+.card {
+  margin-top: 15px;
 }
 
 .FullButton {
