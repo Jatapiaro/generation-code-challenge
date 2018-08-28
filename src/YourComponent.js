@@ -151,10 +151,17 @@ class YourComponent extends Component {
    * @param {*} e 
    */
   onMarkerClick(props, marker, e) {
-    this.setState({
-      selectedPlace: props,
-      activeMarker: marker,
-      showingInfoWindow: true
+    this.setState((prevState) => {
+      let arr = prevState.stores;
+      let store = arr[props.index];
+      store.Favourite = !store.Favourite;
+      localStorage.setItem('stores', JSON.stringify(arr));
+      return {
+        activeMarker: marker,
+        showingInfoWindow: true,
+        selectedPlace: props,
+        stores: arr
+      }
     });
   };
 
