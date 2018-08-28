@@ -154,7 +154,9 @@ class YourComponent extends Component {
     this.setState((prevState) => {
       let arr = prevState.stores;
       let store = arr[props.index];
-      store.Favourite = !store.Favourite;
+      if ( !prevState.showFavourites ) {
+        store.Favourite = !store.Favourite;
+      }
       localStorage.setItem('stores', JSON.stringify(arr));
       return {
         activeMarker: marker,
@@ -209,15 +211,15 @@ class YourComponent extends Component {
               {
                 this.state.showFavourites &&
                 <div className="ButtonHeader">
-                  <Button onClick={this.toggleShowFavourites} className="FullButton" outline color="info">Tiendas</Button>
-                  <Button className="FullButton" color="success">Mis Favoritos</Button>
+                  <Button onClick={this.toggleShowFavourites} className="FullButton" outline color="info">Stores</Button>
+                  <Button className="FullButton" color="success">My Favourites</Button>
                 </div>
               }
               {
                 !this.state.showFavourites &&
                 <div className="ButtonHeader">
-                  <Button className="FullButton" color="info">Tiendas</Button>
-                  <Button onClick={this.toggleShowFavourites} className="FullButton" outline color="success">Mis Favoritos</Button>
+                  <Button className="FullButton" color="info">Stores</Button>
+                  <Button onClick={this.toggleShowFavourites} className="FullButton" outline color="success">My Favourites</Button>
                 </div>
               }
             
@@ -234,12 +236,12 @@ class YourComponent extends Component {
                           <CardText>{store.Address}</CardText>
                           <Button onClick={() => { this.toggleFavouriteElement(index) }} className="ActionButton" size="sm" color={(!store.Favourite) ? 'warning' : 'secondary'}>
                             {
-                              (!store.Favourite) ? `Agregar a Favoritos` : `Quitar de Favoritos`
+                              (!store.Favourite) ? `Add To Favourites` : `Remove From Favourites`
                             }
                           </Button>
                           {
                             store.Position &&
-                            <Button onClick={() => { this.centerOnMap(index) }} size="sm" color="danger">Centrar en el Mapa</Button>
+                            <Button onClick={() => { this.centerOnMap(index) }} size="sm" color="danger">Center on Map</Button>
                           }
                         </Card>
                       );
@@ -255,12 +257,12 @@ class YourComponent extends Component {
                     <CardText>{store.Address}</CardText>
                     <Button onClick={() => { this.toggleFavouriteElement(index) }} className="ActionButton" size="sm" color={(!store.Favourite) ? 'warning' : 'secondary'}>
                       {
-                        (!store.Favourite) ? `Agregar a Favoritos` : `Quitar de Favoritos`
+                        (!store.Favourite) ? `Add To Favourites` : `Remove From Favourites`
                       }
                     </Button>
                     {
                       store.Position &&
-                      <Button onClick={() => { this.centerOnMap(index) }} size="sm" color="danger">Centrar en el Mapa</Button>
+                      <Button onClick={() => { this.centerOnMap(index) }} size="sm" color="danger">Center on Map</Button>
                     }
                   </Card>
                 )
